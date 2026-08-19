@@ -24,7 +24,6 @@ import com.junkfood.seal.database.objects.DownloadedVideoInfo
 import com.junkfood.seal.ui.page.settings.network.Cookie
 import com.junkfood.seal.util.FileUtil.getArchiveFile
 import com.junkfood.seal.util.FileUtil.getConfigFile
-import com.junkfood.seal.util.FileUtil.getCookiesFile
 import com.junkfood.seal.util.FileUtil.getExternalTempDir
 import com.junkfood.seal.util.FileUtil.getFileName
 import com.junkfood.seal.util.FileUtil.getSdcardTempDir
@@ -98,23 +97,12 @@ object DownloadUtil {
                 addOption("-o", BASENAME)
                 addOption("-R", "1")
                 addOption("--socket-timeout", "5")
+                applySharedYtdlpOptions(downloadPreferences)
                 downloadPreferences.run {
                     if (extractAudio) {
                         addOption("-x")
                     }
                     applyFormatSorter(this, toFormatSorter())
-                    if (proxy) {
-                        enableProxy(proxyUrl)
-                    }
-                    if (forceIpv4) {
-                        addOption("-4")
-                    }
-                    if (cookies) {
-                        enableCookies(userAgentString)
-                    }
-                    if (restrictFilenames) {
-                        addOption("--restrict-filenames")
-                    }
                 }
             }
             execute(request, playlistURL).out.run {
@@ -153,24 +141,13 @@ object DownloadUtil {
                     if (extractAudio) {
                         addOption("-x")
                     }
+                    applySharedYtdlpOptions(preferences)
                     applyFormatSorter(this@with, toFormatSorter())
-                    if (cookies) {
-                        enableCookies(userAgentString)
-                    }
-                    if (proxy) {
-                        enableProxy(proxyUrl)
-                    }
-                    if (forceIpv4) {
-                        addOption("-4")
-                    }
                     /*            if (debug) {
                         addOption("-v")
                     }*/
                     if (autoSubtitle) {
                         addOption("--write-auto-subs")
-                        if (!autoTranslatedSubtitles) {
-                            addOption("--extractor-args", "youtube:skip=translated_subs")
-                        }
                     }
                     if (playlistIndex != null) {
                         addOption("--playlist-items", playlistIndex)
@@ -239,6 +216,9 @@ object DownloadUtil {
         val forceIpv4: Boolean,
         val mergeAudioStream: Boolean,
         val mergeToMkv: Boolean,
+        val youtubeEjs: Boolean = false,
+        val youtubePlayerClient: String = "",
+        val youtubeJsRuntime: String = "",
     ) {
         companion object {
             val EMPTY =
@@ -294,11 +274,15 @@ object DownloadUtil {
                     mergeAudioStream = false,
                     mergeToMkv = false,
                     useCustomAudioPreset = false,
+                    youtubeEjs = false,
+                    youtubePlayerClient = "",
+                    youtubeJsRuntime = "",
                 )
 
             fun createFromPreferences(): DownloadPreferences {
                 val downloadSubtitle = SUBTITLE.getBoolean()
                 val embedSubtitle = EMBED_SUBTITLE.getBoolean()
+                val youtubeRuntimePreferences = createYoutubeRuntimePreferences()
                 return DownloadPreferences(
                     extractAudio = EXTRACT_AUDIO.getBoolean(),
                     createThumbnail = THUMBNAIL.getBoolean(),
@@ -353,20 +337,13 @@ object DownloadUtil {
                     mergeAudioStream = false,
                     mergeToMkv =
                         (downloadSubtitle && embedSubtitle) || MERGE_OUTPUT_MKV.getBoolean(),
+                    youtubeEjs = youtubeRuntimePreferences.enableEjs,
+                    youtubePlayerClient = youtubeRuntimePreferences.playerClient,
+                    youtubeJsRuntime = youtubeRuntimePreferences.jsRuntime,
                 )
             }
         }
     }
-
-    private fun YoutubeDLRequest.enableCookies(userAgentString: String): YoutubeDLRequest =
-        this.addOption("--cookies", context.getCookiesFile().absolutePath).apply {
-            if (userAgentString.isNotEmpty()) {
-                addOption("--add-header", "User-Agent:$userAgentString")
-            }
-        }
-
-    private fun YoutubeDLRequest.enableProxy(proxyUrl: String): YoutubeDLRequest =
-        this.addOption("--proxy", proxyUrl)
 
     private fun YoutubeDLRequest.useDownloadArchive(): YoutubeDLRequest =
         this.addOption("--download-archive", context.getArchiveFile().absolutePath)
@@ -446,14 +423,12 @@ object DownloadUtil {
                         addOption("--audio-multistreams")
                     }
                 } else {
+                    addOption("-f", "bv*+ba/b")
                     applyFormatSorter(this, toFormatSorter())
                 }
                 if (downloadSubtitle) {
                     if (autoSubtitle) {
                         addOption("--write-auto-subs")
-                        if (!autoTranslatedSubtitles) {
-                            addOption("--extractor-args", "youtube:skip=translated_subs")
-                        }
                     }
                     subtitleLanguage
                         .takeIf { it.isNotEmpty() }
@@ -569,9 +544,6 @@ object DownloadUtil {
 
                     if (autoSubtitle) {
                         addOption("--write-auto-subs")
-                        if (!autoTranslatedSubtitles) {
-                            addOption("--extractor-args", "youtube:skip=translated_subs")
-                        }
                     }
                     subtitleLanguage
                         .takeIf { it.isNotEmpty() }
@@ -685,18 +657,7 @@ object DownloadUtil {
                 .apply {
                     addOption("--no-mtime")
                     //                addOption("-v")
-                    if (cookies) {
-                        enableCookies(userAgentString)
-                    }
-                    if (restrictFilenames) {
-                        addOption("--restrict-filenames")
-                    }
-                    if (proxy) {
-                        enableProxy(proxyUrl)
-                    }
-                    if (forceIpv4) {
-                        addOption("-4")
-                    }
+                    applySharedYtdlpOptions(downloadPreferences)
                     if (debug) {
                         addOption("-v")
                     }
@@ -887,23 +848,18 @@ object DownloadUtil {
                 YoutubeDLRequest(urlList).apply {
                     commandDirectory.takeIf { it.isNotEmpty() }?.let { addOption("-P", it) }
                     addOption("--newline")
+                    applySharedYtdlpOptions(preferences)
                     if (aria2c) {
                         enableAria2c()
                     }
                     if (useDownloadArchive) {
                         useDownloadArchive()
                     }
-                    if (restrictFilenames) {
-                        addOption("--restrict-filenames")
-                    }
                     addOption(
                         "--config-locations",
                         FileUtil.writeContentToFile(template.template, context.getConfigFile())
                             .absolutePath,
                     )
-                    if (cookies) {
-                        enableCookies(userAgentString)
-                    }
                 }
             }
 
@@ -928,23 +884,18 @@ object DownloadUtil {
                 YoutubeDLRequest(urlList).apply {
                     commandDirectory.takeIf { it.isNotEmpty() }?.let { addOption("-P", it) }
                     addOption("--newline")
+                    applySharedYtdlpOptions(downloadPreferences)
                     if (aria2c) {
                         enableAria2c()
                     }
                     if (useDownloadArchive) {
                         useDownloadArchive()
                     }
-                    if (restrictFilenames) {
-                        addOption("--restrict-filenames")
-                    }
                     addOption(
                         "--config-locations",
                         FileUtil.writeContentToFile(template.template, context.getConfigFile())
                             .absolutePath,
                     )
-                    if (cookies) {
-                        enableCookies(userAgentString)
-                    }
                 }
 
             onProcessStarted()

@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import com.junkfood.seal.App
 import com.junkfood.seal.R
 import com.junkfood.seal.ui.common.booleanState
 import com.junkfood.seal.ui.component.BackButton
@@ -40,9 +41,13 @@ import com.junkfood.seal.util.CUSTOM_COMMAND
 import com.junkfood.seal.util.FORCE_IPV4
 import com.junkfood.seal.util.PROXY
 import com.junkfood.seal.util.PreferenceUtil.getBoolean
+import com.junkfood.seal.util.PreferenceUtil.getString
 import com.junkfood.seal.util.PreferenceUtil.updateBoolean
 import com.junkfood.seal.util.PreferenceUtil.updateValue
 import com.junkfood.seal.util.RATE_LIMIT
+import com.junkfood.seal.util.YOUTUBE_EJS
+import com.junkfood.seal.util.YOUTUBE_PLAYER_CLIENT
+import com.junkfood.seal.util.YoutubeRuntimeInstaller
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +65,8 @@ fun NetworkPreferences(navigateToCookieProfilePage: () -> Unit = {}, onNavigateB
     var proxy by PROXY.booleanState
     var isCookiesEnabled by COOKIES.booleanState
     var forceIpv4 by FORCE_IPV4.booleanState
+    var youtubeEjs by YOUTUBE_EJS.booleanState
+    val youtubeRuntimeStatus = remember { YoutubeRuntimeInstaller.getStatus(App.context) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -171,6 +178,45 @@ fun NetworkPreferences(navigateToCookieProfilePage: () -> Unit = {}, onNavigateB
                         description = stringResource(R.string.cookies_desc),
                         icon = Icons.Outlined.Cookie,
                         onClick = { navigateToCookieProfilePage() },
+                    )
+                }
+                item { PreferenceSubtitle(text = stringResource(R.string.youtube_advanced)) }
+                item {
+                    PreferenceSwitch(
+                        title = stringResource(R.string.enable_ejs),
+                        description = stringResource(R.string.enable_ejs_desc),
+                        icon = Icons.Outlined.SettingsEthernet,
+                        enabled = !isCustomCommandEnabled,
+                        isChecked = youtubeEjs,
+                    ) {
+                        youtubeEjs = !youtubeEjs
+                        YOUTUBE_EJS.updateBoolean(youtubeEjs)
+                    }
+                }
+                item {
+                    PreferenceItem(
+                        title = stringResource(R.string.youtube_player_client),
+                        description =
+                            stringResource(
+                                R.string.youtube_player_client_desc,
+                                YOUTUBE_PLAYER_CLIENT.getString(),
+                            ),
+                        icon = Icons.Outlined.SettingsEthernet,
+                    )
+                }
+                item {
+                    PreferenceItem(
+                        title = stringResource(R.string.js_runtime_status),
+                        description =
+                            if (youtubeRuntimeStatus.isRuntimeAvailable) {
+                                stringResource(
+                                    R.string.js_runtime_available,
+                                    youtubeRuntimeStatus.runtimePath,
+                                )
+                            } else {
+                                stringResource(R.string.js_runtime_missing)
+                            },
+                        icon = Icons.Outlined.SettingsEthernet,
                     )
                 }
             }

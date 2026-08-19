@@ -41,6 +41,7 @@ import com.junkfood.seal.util.PreferenceUtil.getString
 import com.junkfood.seal.util.PreferenceUtil.updateBoolean
 import com.junkfood.seal.util.RESTRICT_FILENAMES
 import com.junkfood.seal.util.UpdateUtil
+import com.junkfood.seal.util.YoutubeRuntimeInstaller
 import com.junkfood.seal.util.YT_DLP_VERSION
 import com.junkfood.seal.util.makeToast
 import com.yausername.youtubedl_android.YoutubeDL
@@ -70,9 +71,9 @@ fun TroubleShootingPage(
                         modifier = Modifier,
                         text = stringResource(R.string.issue_tracker_hint),
                     )
-                    val knownIssueUrlSeal = "https://github.com/JunkFood02/Seal/issues/1399"
+                    val knownIssueUrlSeal = "https://github.com/username/kanau/issues"
                     PreferenceItem(
-                        title = "Seal Issue Tracker",
+                        title = "kanau Issue Tracker",
                         description = null,
                         icon = Icons.AutoMirrored.Outlined.OpenInNew,
                         onClick = { uriHandler.openUri(knownIssueUrlSeal) },
@@ -159,6 +160,29 @@ fun TroubleShootingPage(
                 if (showYtdlpDialog) {
                     YtdlpUpdateChannelDialog(onDismissRequest = { showYtdlpDialog = false })
                 }
+            }
+            item { PreferenceSubtitle(text = stringResource(R.string.youtube_advanced)) }
+            item {
+                val runtimeStatus = remember { YoutubeRuntimeInstaller.getStatus(context) }
+                PreferenceInfo(
+                    text =
+                        buildString {
+                            append("yt-dlp: ")
+                            append(ytdlpVersion)
+                            append("\nJS runtime: ")
+                            append(
+                                if (runtimeStatus.isRuntimeAvailable) runtimeStatus.runtimePath
+                                else context.getString(R.string.js_runtime_missing)
+                            )
+                            append("\nEJS: ")
+                            append(
+                                if (runtimeStatus.isEjsAvailable)
+                                    context.getString(R.string.ejs_available)
+                                else context.getString(R.string.ejs_missing)
+                            )
+                            append("\nFFmpeg: bundled by youtubedl-android")
+                        }
+                )
             }
 
             item { PreferenceSubtitle(text = stringResource(R.string.network)) }

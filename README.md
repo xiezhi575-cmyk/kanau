@@ -2,9 +2,9 @@
 
 <img width="" src="fastlane/metadata/android/en-US/images/icon.png"  width=160 height=160  align="center">
 
-# Seal
+# かなう / kanau
 
-### Video/Audio Downloader for Android
+### Personal Android video/audio downloader forked from Seal
 
 
 English
@@ -120,7 +120,7 @@ Join our [Telegram Channel](https://t.me/seal_app) or [Matrix Space](https://mat
 <p><!-- sponsors --><a href="https://github.com/Opposum102"><img src="https:&#x2F;&#x2F;github.com&#x2F;Opposum102.png" width="60px" alt="User avatar: " /></a><a href="https://github.com/hvarfredriksen"><img src="https:&#x2F;&#x2F;github.com&#x2F;hvarfredriksen.png" width="60px" alt="User avatar: Håvar Fredriksen" /></a><!-- sponsors --></p>
 
 
-Seal will be always free and open source for everyone. If you like it, please consider [sponsoring me](https://github.com/sponsors/JunkFood02)!
+かなう / kanau is a personal fork of Seal. Seal remains free and open source for everyone; if you like the original project, please consider [sponsoring JunkFood02](https://github.com/sponsors/JunkFood02)!
 
 ## 🤝 Contributing
 
@@ -141,7 +141,7 @@ You can help translate Seal on [Hosted Weblate](https://hosted.weblate.org/proje
 
 ## 🧱 Credits
 
-Seal is a simple GUI of [yt-dlp](https://github.com/yt-dlp/yt-dlp), based on [youtubedl-android](https://github.com/yausername/youtubedl-android)
+かなう / kanau is a personal fork of Seal. Seal is a simple GUI of [yt-dlp](https://github.com/yt-dlp/yt-dlp), based on [youtubedl-android](https://github.com/yausername/youtubedl-android)
 
 Some of the UI designs and codes are borrowed from [Read You](https://github.com/Ashinch/ReadYou) and [Music You](https://github.com/Kyant0/MusicYou)
 
@@ -159,7 +159,7 @@ Some of the UI designs and codes are borrowed from [Read You](https://github.com
 >
 >Except for the source code licensed under the GPLv3 license,
 >all other parties are prohibited from using Seal's name as a downloader app,
->and the same is true for Seal's derivatives.
+>and the same is true for Seal's derivatives. This fork uses the kanau name to avoid using Seal branding for derivative builds.
 >Derivatives include but are not limited to forks and unofficial builds.
 
 <div align="right">
